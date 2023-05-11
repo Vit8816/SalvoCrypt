@@ -50,7 +50,3 @@ Sono benvenuti contributi al progetto. Se desideri contribuire, puoi seguire que
 ## Autori
 
     Vittorio Salvatore Piccolo
-
-## Contatti
-
-Puoi contattare l'autore del progetto su LinkedIn: Vittorio Salvatore Piccolo
