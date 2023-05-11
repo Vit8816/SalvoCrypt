@@ -41,13 +41,14 @@ class Cipher:
             c = int(((self.pow_n%c)+(self.const_int%c))/2)
             self.loaded_key += c.to_bytes(1, 'big')
     def encrypt(self, text):
-        text = text.encode()
+        if isinstance(text, str):
+            text = text.encode()
         text = text.hex().encode()
         text = text[::-1]
         lst = self.xor(text, self.loaded_key)
         return lst
     def decrypt(self, text):
-        if text is str:
+        if isinstance(text, str):
             text = text.encode()
         text = self.xor(text, self.loaded_key)
         text = text[::-1].decode(errors="ignore")
