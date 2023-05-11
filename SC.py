@@ -54,11 +54,3 @@ class Cipher:
         text = bytes.fromhex(text)
         text = text.decode()
         return text
-
-cip = Cipher(3)
-cip.generate_key(4096)
-clear = "".join(random.choice(chars) for _ in range(2048))
-enc = cip.encrypt(clear)
-dec = cip.decrypt(enc)
-if dec == clear:
-    print(len(clear))
