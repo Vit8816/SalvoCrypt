@@ -33,7 +33,8 @@ decrypted_text = cipher.decrypt(ciphertext)
 
 print("Testo originale:", plaintext)
 print("Testo crittografato:", ciphertext)
-print("Testo decrittografato:", decrypted_text)```
+print("Testo decrittografato:", decrypted_text)
+```
 
 ## Contributi
 
