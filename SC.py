@@ -13,7 +13,8 @@ class Cipher:
         const = int(const%pow_n)
         const = int(math.pow(math.log2(const), math.log2(pow_n)))
         pow_n = int((const*(math.pow(pow_n,2)))+(pow_n%const)+const)
-        const = int((pow_n%const)*pow_n)
+        const = int(((pow_n%const)*pow_n)+(math.log2(pow_n)+math.log(const)))
+        const = int((((pow_n%const)*(const%pow_n))**2)/2)
         self.pow_n = pow_n
         self.const_int = const
         self.const = const.to_bytes(math.ceil(const.bit_length() / 8), 'big').hex()
