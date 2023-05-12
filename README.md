@@ -2,7 +2,7 @@
 
 ## Descrizione
 
-Il cifrario a chiave simmetrica è progettato per crittografare e decrittografare testo utilizzando una chiave simmetrica. Il codice è scritto in Python e offre un'implementazione semplice e rapida di un algoritmo di cifratura.
+Il cifrario a chiave simmetrica SalvoCrypt è progettato per crittografare e decrittografare testo utilizzando una chiave simmetrica. Il codice è scritto in Python e offre un'implementazione semplice e rapida di un algoritmo di cifratura.
 
 ## Utilizzo
 
