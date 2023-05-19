@@ -41,15 +41,35 @@ class Cipher:
             c = ord(c)
             c = int(((self.pow_n%c)+(self.const_int%c))/2)
             self.loaded_key += c.to_bytes(1, 'big')
+        self.loaded_key = self.loaded_key*len(self.key)
+        const = int(self.const,16)
+        len_key = len(self.key)
+        len_key = len_key.to_bytes(math.ceil(len_key.bit_length() / 8), 'big').hex()
+        const = const.to_bytes(math.ceil(const.bit_length() / 8), 'big').hex()
+        self.const = const*len(self.key)
     def encrypt(self, text: str):
         text = text.encode()
         text = text.hex().encode()
         text = text[::-1]
-        lst = self.xor(text, self.loaded_key)
-        return lst
-    def decrypt(self, text):
+        text = self.xor(text, self.const.encode())
+        text = text[::-1]
         text = self.xor(text, self.loaded_key)
-        text = text[::-1].decode(errors="ignore")
-        text = bytes.fromhex(text)
-        text = text.decode()
+        text = text[::-1].hex()
         return text
+    def decrypt(self, text):
+        text = bytes.fromhex(text).decode()
+        text = text[::-1].encode()
+        text = self.xor(text, self.loaded_key)
+        text = text[::-1]
+        text = self.xor(text, self.const.encode())
+        text = text[::-1].decode(errors="ignore")
+        text = bytes.fromhex(text).decode()
+        return text
+
+cip = Cipher(3)
+cip.generate_key(4096)
+clear = "Ciao, questo testo è una prova del cifrario"
+enc = cip.encrypt(clear)
+print(enc)
+dec = cip.decrypt(enc)
+print(dec)
