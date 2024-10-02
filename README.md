@@ -19,7 +19,10 @@ SalvoCrypt è un progetto che implementa un cifrario personalizzato con l'obiett
    git clone https://github.com/Vit8816/SalvoCrypt.git
    ```
 2. Installa le dipendenze necessarie.
-3. Esegui il programma per testare il cifrario.
+  ```bash
+   pip install numpy
+  ```
+4. Esegui il programma per testare il cifrario.
 
 ## Contribuire
 
@@ -48,7 +51,10 @@ SalvoCrypt is a project that implements a custom cipher aimed at providing a sec
    git clone https://github.com/Vit8816/SalvoCrypt.git
    ```
 2. Install necessary dependencies.
-3. Run the program to test the cipher.
+   ```bash
+   pip install numpy
+   ```
+4. Run the program to test the cipher.
 
 ## Contributing
 
