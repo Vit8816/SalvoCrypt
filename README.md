@@ -64,7 +64,7 @@ SalvoCrypt is a project that implements a custom cipher aimed at providing a sec
    pip install numpy
    ```
 4. Run the program to test the cipher.
-   ```python
+  ```python
 cip = Cipher(3)
 cip.generate_key(4096)
 clear = "Ciao, questo testo è una prova del cifrario"*4096
