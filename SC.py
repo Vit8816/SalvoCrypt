@@ -133,6 +133,6 @@ class Cipher:
         text = self.xor(text, self.loaded_key)
         text = text[::-1]
         text = self.xor(text, self.const.encode())
-        text = text[::-1].decode(errors="ignore")
+        text = text[::-1].decode()
         text = bytes.fromhex(text).decode()
         return text
