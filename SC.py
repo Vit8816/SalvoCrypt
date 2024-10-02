@@ -136,11 +136,3 @@ class Cipher:
         text = text[::-1].decode(errors="ignore")
         text = bytes.fromhex(text).decode()
         return text
-
-cip = Cipher(3)
-cip.generate_key(4096)
-clear = "Ciao, questo testo è una prova del cifrario"
-enc = cip.encrypt(clear)
-print(enc)
-dec = cip.decrypt(enc)
-print(dec)
