@@ -26,7 +26,7 @@ SalvoCrypt è un progetto che implementa un cifrario personalizzato con l'obiett
 ```python
 cip = Cipher(3)
 cip.generate_key(4096)
-clear = "Ciao, questo testo è una prova del cifrario"*4096
+clear = "Ciao, questo testo è una prova del cifrario"
 enc = cip.encrypt(clear)
 print(enc)
 dec = cip.decrypt(enc)
@@ -67,7 +67,7 @@ SalvoCrypt is a project that implements a custom cipher aimed at providing a sec
   ```python
 cip = Cipher(3)
 cip.generate_key(4096)
-clear = "Ciao, questo testo è una prova del cifrario"*4096
+clear = "Hello, this text is a test of the cipher"
 enc = cip.encrypt(clear)
 print(enc)
 dec = cip.decrypt(enc)
