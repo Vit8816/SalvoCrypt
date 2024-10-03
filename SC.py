@@ -42,10 +42,10 @@ class Cipher:
         const = int((n % n) * n + (math.log2(n) + math.log(n, 2))) + 1
         const = int((((((n % const) * (const % n)) ** 2) / 2) + 2)+self.n)
         return const
-    def calc_pow_n(self, const):
-        base = (const & (const - 1) + const) + 1
-        intermediate = ((const ^ base + (base // 2)) % base) + 2
-        pow_n = int(((intermediate * (base ** 2)) + (base % intermediate) + const)-self.n)
+    def calc_pow_n(self, pow_n):
+        base = (pow_n & (pow_n - 1) + pow_n) + 1
+        intermediate = ((pow_n ^ base + (base // 2)) % base) + 2
+        pow_n = int(((intermediate * (base ** 2)) + (base % intermediate) + pow_n)-self.n)
         return pow_n
     def generate_key(self, length: int):
         if length < 4096:
