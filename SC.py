@@ -1,7 +1,7 @@
 import math
-import random
 import string
 import base64
+import secrets
 import numpy as np
 
 chars = string.ascii_letters + string.digits + string.punctuation
@@ -31,30 +31,27 @@ class Cipher:
         self.n = const
         self.key = ""
         self.loaded_key = b""
-        pow_n = int((const&const-1)%const)+ const
-        const = int((const^pow_n + int(pow_n/2))%pow_n)
-        const = int(const%pow_n)
-        const = int(math.pow(math.log2(const), math.log2(pow_n)))
-        pow_n = int((const*(math.pow(pow_n,2)))+(pow_n%const)+const)
-        const = int(((pow_n%const)*pow_n)+(math.log2(pow_n)+math.log(const)))
-        const = int((((pow_n%const)*(const%pow_n))**2)/2)
+        const = int(((3 * math.log2(const) + const ** 2) % (const + 5) + math.sqrt(const ** 3 + 7)) % (const ** 3 + 10))
+        pow_n = int(((math.log2(const**3 + 1) + const*2) % (const + 7) + (const*5 + 3*const) / 2) % (const**4 + math.log(const + 10)))
+        const = self.calc_const(const)
+        pow_n = self.calc_pow_n(pow_n)
         self.pow_n = pow_n
         self.const_int = const
         self.const = const.to_bytes(math.ceil(const.bit_length() / 8), 'big').hex()
     def calc_const(self, n):
-        const = int((n % n) * n + (math.log2(n) + math.log(n, 2)))+1
-        const = int((((n % const) * (const % n)) ** 2) / 2)+2
+        const = int((n % n) * n + (math.log2(n) + math.log(n, 2))) + 1
+        const = int((((((n % const) * (const % n)) ** 2) / 2) + 2)+self.n)
         return const
     def calc_pow_n(self, const):
-        base = (const & (const - 1) + const)+1
-        intermediate = ((const ^ base + (base // 2)) % base)+2
-        pow_n = int((intermediate * (base ** 2)) + (base % intermediate) + const)
+        base = (const & (const - 1) + const) + 1
+        intermediate = ((const ^ base + (base // 2)) % base) + 2
+        pow_n = int(((intermediate * (base ** 2)) + (base % intermediate) + const)-self.n)
         return pow_n
     def generate_key(self, length: int):
         if length < 4096:
             print("Min length of key should be 4096")
             exit()
-        self.key = "".join(random.choice(chars) for _ in range(length))
+        self.key = "".join(secrets.choice(chars) for _ in range(length))
         self.load_key()
     def xor(self, text, key):
         return bytes([x ^ y for x, y in zip(text, key)])
@@ -91,9 +88,9 @@ class Cipher:
         for c in self.key:
             k = ord(c)
             mm = (((m*n)+p)%k) + 1
-            mat = int(((m * n) % mm + (p % (m-p)) * (n % mm)) / 3)
-            key += chr(int((((m * n) % k + (p % mm)) / 2)+mat)).encode()
-        self.matrix_key = Utils.generate_key_matrix(self.xor(key, self.loaded_key).decode("utf8", errors="ignore"))
+            mat = int(((p+n)/(m+k)))
+            key += chr(int((math.log2(mat + 1) + (p**2 % 256) + (n**3 % 256)) % 256)).encode()
+        self.matrix_key = Utils.generate_key_matrix(self.xor(self.const.encode(),self.xor(key, self.loaded_key)).decode("utf8", errors="ignore"))
     def enc_matrix(self, text):
         text = Utils.text_to_binary(text)
         text = Utils.split_into_blocks(text)
