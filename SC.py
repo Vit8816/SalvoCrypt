@@ -24,7 +24,12 @@ class Utils:
     @staticmethod
     def generate_key_matrix(key):
         key_blocks = Utils.split_into_blocks(Utils.text_to_binary(key))
-        return np.array([list(map(int, block)) for block in key_blocks])
+        b = int(key_blocks[0], 2)
+        for n in range(1, len(key_blocks)):
+            kb = int(key_blocks[n], 2)
+            b = (b ^ kb) ^ b
+        b = [str(format(b, '064b'))]
+        return b
 
 class Cipher:
     def __init__(self, const: int):
@@ -56,7 +61,9 @@ class Cipher:
     def xor(self, text, key):
         return bytes([x ^ y for x, y in zip(text, key)])
     def xor_matrix(self, matrix, key):
-        return matrix ^ key
+        matrix = np.array(matrix, dtype=int)
+        key = np.array(list(map(int, key)), dtype=int)
+        return np.bitwise_xor(matrix, key)
     def set_key(self, key):
         if len(key) < 4096:
             print("Min length of key should be 4096")
@@ -114,6 +121,7 @@ class Cipher:
         decrypted_text = Utils.binary_to_text(decrypted_binary)
         return decrypted_text
     def encrypt(self, text: str):
+        text = self.enc_matrix(text)
         text = text.encode()
         text = base64.b64encode(text)
         text = text[::-1]
@@ -132,4 +140,5 @@ class Cipher:
         text = self.xor(text, self.const.encode())
         text = text[::-1].decode()
         text = base64.b64decode(text).decode()
+        text = self.dec_matrix(text)
         return text
