@@ -115,21 +115,21 @@ class Cipher:
         return decrypted_text
     def encrypt(self, text: str):
         text = text.encode()
-        text = text.hex().encode()
+        text = base64.b64encode(text)
         text = text[::-1]
         text = self.xor(text, self.const.encode())
         text = text[::-1]
         text = self.xor(text, self.loaded_key)
         text = text[::-1]
-        text = self.enc_matrix(text)[::-1].encode().hex()
+        text = base64.b64encode(self.enc_matrix(text)[::-1].encode())
         return text
     def decrypt(self, text):
-        text = bytes.fromhex(text).decode()
+        text = base64.b64decode(text).decode()
         text = self.dec_matrix(text[::-1])
         text = text[::-1].encode()
         text = self.xor(text, self.loaded_key)
         text = text[::-1]
         text = self.xor(text, self.const.encode())
         text = text[::-1].decode()
-        text = bytes.fromhex(text).decode()
+        text = base64.b64decode(text).decode()
         return text
