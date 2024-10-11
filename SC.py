@@ -9,8 +9,6 @@ chars = string.ascii_letters + string.digits + string.punctuation
 class Utils:
     @staticmethod
     def text_to_binary(text):
-        if isinstance(text, bytes):
-            text = text.decode('utf-8')
         return ''.join(format(ord(c), '08b') for c in text)
     @staticmethod
     def binary_to_text(binary):
@@ -30,6 +28,20 @@ class Utils:
             b = (b ^ kb) ^ b
         b = [str(format(b, '064b'))]
         return b
+    @staticmethod
+    def calc_dividends(x, a, b):
+        while True:
+            a_squared = int(((x*3+(x+3)*2)+b)*0.25)
+            b_squared = int(((x*3+(x-3)*2)+a)*0.5)
+            if math.gcd(a_squared, b_squared) == 1:
+                return a_squared, b_squared
+            else:
+                x += 1
+    @staticmethod
+    def elliptic_curve_calc(x, a, b):
+        a_squared = int((x*3+(x+b)*2)/b)+1
+        b_squared = int((x*3+(x-a)*2)/a)-1
+        return a_squared, b_squared
 
 class Cipher:
     def __init__(self, const: int):
@@ -38,10 +50,11 @@ class Cipher:
         self.loaded_key = b""
         const = int(((3 * math.log2(const) + const ** 2) % (const + 5) + math.sqrt(const ** 3 + 7)) % (const ** 3 + 10))
         pow_n = int(((math.log2(const**3 + 1) + const*2) % (const + 7) + (const*5 + 3*const) / 2) % (const**4 + math.log(const + 10)))
-        const = self.calc_const(const)
-        pow_n = self.calc_pow_n(pow_n)
-        self.pow_n = pow_n
-        self.const_int = const
+        self.const_a, self.const_b = Utils.calc_dividends(self.n, const, pow_n)
+        self.pow_n_a, self.pow_n_b = Utils.calc_dividends(self.n, pow_n, const)
+        self.const = self.calc_const(const)
+        self.pow_n = self.calc_pow_n(pow_n)
+        self.const_int = Utils.calc_dividends(self.n, self.const, self.pow_n)[1]%self.const_b
         self.const = const.to_bytes(math.ceil(const.bit_length() / 8), 'big').hex()
     def calc_const(self, n):
         const = int((n % n) * n + (math.log2(n) + math.log(n, 2))) + 1
@@ -75,29 +88,29 @@ class Cipher:
             print("Please generate or load key")
             exit()
         self.loaded_key = b""
-        for c in self.key:
-            c = ord(c)
-            c = int(((self.pow_n%c)+(self.const_int%c))/2)
-            self.loaded_key += c.to_bytes(1, 'big')
+        for t in self.key:
+            c = ord(t)
+            c = int((((self.pow_n%c)+(self.const_int%c))+1))
+            a,b = Utils.elliptic_curve_calc(self.n, c, self.const_a)
+            self.loaded_key += str(a+b+c).encode()
         self.loaded_key = self.loaded_key*len(self.key)
+        self.loaded_key = base64.b85encode(self.loaded_key)
         const = int(self.const,16)
-        len_key = len(self.key)
-        len_key = len_key.to_bytes(math.ceil(len_key.bit_length() / 8), 'big').hex()
         const = const.to_bytes(math.ceil(const.bit_length() / 8), 'big').hex()
-        self.const = const*len(self.key)
+        self.const = const.encode()
         self.calc_matrix_key()
     def calc_matrix_key(self):
         mat = 0
         m = self.const_int
         n = self.n
         p = self.pow_n
-        key = b""
+        key = ""
         for c in self.key:
             k = ord(c)
             mm = (((m*n)+p)%k) + 1
             mat = int(((p+n)/(m+k)))
-            key += chr(int((math.log2(mat + 1) + (p**2 % 256) + (n**3 % 256)) % 256)).encode()
-        self.matrix_key = Utils.generate_key_matrix(self.xor(self.const.encode(),self.xor(key, self.loaded_key)).decode("utf8", errors="ignore"))
+            key += chr(int((math.log2(mat + 1) + (p**2 % 256) + (n**3 % 256)) % k))
+        self.matrix_key = Utils.generate_key_matrix(str(key))
     def enc_matrix(self, text):
         text = Utils.text_to_binary(text)
         text = Utils.split_into_blocks(text)
@@ -120,25 +133,40 @@ class Cipher:
         decrypted_binary = ''.join(decrypted_blocks)
         decrypted_text = Utils.binary_to_text(decrypted_binary)
         return decrypted_text
+    def enc_math(self, text: str):
+        rest = ""
+        for t in text:
+            c = ord(t)
+            c = (c*self.const_a)-self.const_b
+            c = (c*self.pow_n_a)-self.pow_n_b
+            rest += f"{c} "
+        return base64.b64encode(rest.encode()).decode()
+    def dec_math(self, text: str):
+        rest = ""
+        text = base64.b64decode(text.encode()).decode()
+        for t in text.split(" "):
+            if t.strip():
+                c = int(t)
+                c = (c+self.pow_n_b)/self.pow_n_a
+                c = (c+self.const_b)/self.const_a
+                rest += chr(int(c))
+        return rest
     def encrypt(self, text: str):
+        text = self.enc_math(text)
         text = self.enc_matrix(text)
         text = text.encode()
-        text = base64.b64encode(text)
-        text = text[::-1]
-        text = self.xor(text, self.const.encode())
+        text = base64.b85encode(text)
         text = text[::-1]
         text = self.xor(text, self.loaded_key)
         text = text[::-1]
-        text = base64.b64encode(self.enc_matrix(text)[::-1].encode())
+        text = base64.b64encode(text).decode()
         return text
     def decrypt(self, text):
         text = base64.b64decode(text).decode()
-        text = self.dec_matrix(text[::-1])
         text = text[::-1].encode()
         text = self.xor(text, self.loaded_key)
         text = text[::-1]
-        text = self.xor(text, self.const.encode())
-        text = text[::-1].decode()
-        text = base64.b64decode(text).decode()
+        text = base64.b85decode(text).decode()
         text = self.dec_matrix(text)
+        text = self.dec_math(text)
         return text
