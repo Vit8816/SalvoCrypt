@@ -1,79 +1,61 @@
-# SalvoCrypt - IT
+# SalvoCrypt v3 — experimental
 
-## Descrizione
+SalvoCrypt v3 is an authenticated-encryption envelope built from established
+cryptographic primitives. It is a development version and has not received an
+independent security audit.
 
-SalvoCrypt è un progetto che implementa un cifrario personalizzato con l'obiettivo di fornire una soluzione di crittografia sicura e robusta. La versione 2.0 del cifrario presenta miglioramenti significativi rispetto alla versione precedente, tra cui un aumento della sicurezza e un’ottimizzazione della generazione delle chiavi.
+## Security design
 
-### Caratteristiche
-- **Lunghezza minima della chiave**: 4096 bit per una protezione robusta.
-- **Generazione delle chiavi ottimizzata**: Algoritmi migliorati per chiavi uniche.
-- **Gestione delle chiavi migliorata**: Metodi più chiari per il caricamento e la convalida delle chiavi.
-- **Algoritmo di crittografia raffinato**: Maggiore complessità nella decrittazione non autorizzata.
-- **Supporto per la codifica Base64**: Per una trasmissione e archiviazione sicura.
-- **Struttura del codice**: Riorganizzazione per una migliore leggibilità e manutenibilità.
+- AES-256-GCM or ChaCha20-Poly1305 encrypts and authenticates data.
+- Every encryption generates a new 96-bit nonce.
+- Argon2id derives a 256-bit key from a password and a random salt.
+- HKDF-SHA256 derives a key from high-entropy binary material.
+- RSA-3072-OAEP-SHA256 or ephemeral X25519 can protect a random data key.
+- Base64 is used only to serialize bytes. It does not add security.
+- `indexed_sum` is diagnostic metadata only. It is deliberately excluded from
+  the security boundary because every finite sum has collisions.
 
-## Utilizzo
+The earlier custom `const`, `pow_n`, repeated XOR and affine transformations
+have been removed from the encryption path.
 
-1. Clona il repository:
-   ```bash
-   git clone https://github.com/Vit8816/SalvoCrypt.git
-   ```
-2. Installa le dipendenze necessarie.
-   ```bash
-   pip install numpy
-   ```
-4. Esegui il programma per testare il cifrario.
+## Install and test
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m pytest
+```
+
+## Password example
+
+The salt and Argon2id parameters must be stored alongside the ciphertext.
+
 ```python
-cip = Cipher(3)
-cip.generate_key(4096)
-clear = "Ciao, questo testo è una prova del cifrario"
-enc = cip.encrypt(clear)
-print(enc)
-dec = cip.decrypt(enc)
-print(dec)
+import secrets
+from SC import KeyLoader, encrypt_bytes, decrypt_bytes, dumps, loads
+
+salt = secrets.token_bytes(16)
+material = KeyLoader.from_password("a long passphrase", salt=salt)
+encoded = dumps(encrypt_bytes(b"message", material.key))
+clear = decrypt_bytes(loads(encoded), material.key)
+assert clear == b"message"
+
+changed_bits = material.sensitivity_delta(1, 2)
+print(changed_bits)
 ```
 
-## Contribuire
+Never reuse a stored salt as a nonce, never publish a raw key, and never return
+plaintext when authenticated decryption fails.
 
-Le collaborazioni sono benvenute! Sentiti libero di aprire un problema o una richiesta di pull.
+## Public-key modes
 
----
+`encrypt_for_rsa` uses RSA only to wrap a random 256-bit data key; it does not
+encrypt the complete document with RSA. `encrypt_for_x25519` performs ephemeral
+X25519 key agreement, derives a wrapping key through HKDF and protects the data
+key with ChaCha20-Poly1305. In both modes the payload remains AEAD-encrypted.
 
-# SalvoCrypt - EN
+## Compatibility
 
-## Description
+Version 3 is intentionally incompatible with the previous experimental format.
+No automatic legacy decryption is provided because unauthenticated plaintext
+must not be silently accepted by the new API.
 
-SalvoCrypt is a project that implements a custom cipher aimed at providing a secure and robust encryption solution. Version 2.0 of the cipher features significant improvements over the previous version, including enhanced security and optimized key generation.
-
-### Features
-- **Minimum Key Length**: 4096 bits for robust protection.
-- **Optimized Key Generation**: Improved algorithms for unique keys.
-- **Enhanced Key Management**: Clearer methods for loading and validating keys.
-- **Refined Encryption Algorithm**: Increased complexity in unauthorized decryption.
-- **Base64 Encoding Support**: For secure transmission and storage.
-- **Code Structure**: Reorganized for better readability and maintainability.
-
-## Usage
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Vit8816/SalvoCrypt.git
-   ```
-2. Install necessary dependencies.
-   ```bash
-   pip install numpy
-   ```
-4. Run the program to test the cipher.
-  ```python
-cip = Cipher(3)
-cip.generate_key(4096)
-clear = "Hello, this text is a test of the cipher"
-enc = cip.encrypt(clear)
-print(enc)
-dec = cip.decrypt(enc)
-print(dec)
-```
-
-## Contributing
-
-Contributions are welcome! Feel free to open an issue or a pull request.
